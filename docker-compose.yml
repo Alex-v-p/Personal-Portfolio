@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+    # Laravel application (PHP-FPM)
+    web:
+        build:
+            context: .
+        container_name: laravel_web
+        volumes:
+            - .:/var/www
+            - ./storage:/var/www/storage # SQLite data storage
+        networks:
+            - app-network
+        restart: always
+
+    # Nginx reverse proxy
+    nginx:
+        image: nginx:alpine
+        container_name: laravel_nginx
+        ports:
+            - "80:80" # Map port 80 on the host to port 80 in the container
+        volumes:
+            - .:/var/www
+            - ./nginx.conf:/etc/nginx/conf.d/default.conf
+        networks:
+            - app-network
+        restart: always
+
+    # Netdata for real-time monitoring
+    netdata:
+        image: netdata/netdata
+        container_name: netdata
+        ports:
+            - "19999:19999" # Access Netdata UI at port 19999
+        networks:
+            - app-network
+        restart: always
+
+# Network configuration for containers
+networks:
+    app-network:
+        driver: bridge
+
