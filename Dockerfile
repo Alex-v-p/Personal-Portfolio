@@ -1,6 +1,6 @@
 FROM php:8.3-fpm
 
-# Install necessary dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
@@ -16,20 +16,29 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /var/www
 
-# Install Composer before copying (cached better)
+# Install Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Copy full Laravel app
+# Copy full Laravel project into the container
 COPY . /var/www
 
-# Install dependencies
-RUN composer install --no-interaction
+# Ensure .env exists to allow artisan commands to run
+RUN cp .env.example .env || true
 
-# Set permissions
+# Install PHP dependencies with optimized autoloader
+RUN composer install --no-dev --optimize-autoloader
+
+# Generate Laravel app key and cache configs
+RUN php artisan key:generate \
+ && php artisan config:cache \
+ && php artisan route:cache \
+ && php artisan view:cache
+
+# Set correct permissions
 RUN chown -R www-data:www-data /var/www
 
-# Expose PHP port
+# Expose port for PHP-FPM
 EXPOSE 9000
 
-# Start PHP-FPM
+# Start PHP-FPM server
 CMD ["php-fpm"]
