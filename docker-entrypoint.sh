@@ -12,6 +12,11 @@ php artisan config:cache
 php artisan route:cache
 php artisan view:cache
 
+# Fix potential permission issues on database
+chmod -R 775 /var/www/database
+chown -R www-data:www-data /var/www/database
+
+
 echo "✅ Laravel is ready."
 
 # Start PHP-FPM
